@@ -13,9 +13,17 @@ a CLI for ACK cluster
 ## usage
 
 ```sh
+# set credential by enviorment
 export ALIBABA_CLOUD_REGION_ID=cn-hangzhou
 export ALIBABA_CLOUD_ACCESS_KEY_ID=
 export ALIBABA_CLOUD_ACCESS_KEY_SECRET=
+# or set credential by configfile: ~/.alibabacloud/credentials
+mkdir -p ~/.alibabacloud/ && cat ->~/.alibabacloud/credentials<<EOF
+[default]                          # 默认客户端
+type = access_key                  # 认证方式为 access_key
+access_key_id = akxxxx                # Key
+access_key_secret =  secretxxxx           # Secret
+EOF
 
 ❯ cs cluster ls
 Name          | ClusterID                         | Region      | State   | ClusterType       | CurrentVersion  | VPC                       | SecurityGroupID
