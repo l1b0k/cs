@@ -24,6 +24,7 @@ import (
 	"github.com/l1b0k/cs/pkg/utils"
 	"github.com/l1b0k/cs/pkg/views"
 
+	"github.com/aliyun/alibaba-cloud-sdk-go/services/ecs"
 	"github.com/pterm/pterm"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
@@ -73,10 +74,10 @@ func clusterInspect(clusterID string) {
 	cobra.CheckErr(err)
 
 	data = [][]string{
-		{"Name", "InstanceID", "InternalIP", "Zone"},
+		{"Name", "InstanceID", "InternalIP", "Zone", "InstanceType"},
 	}
 	for _, node := range nodes {
-		data = append(data, []string{node.Name, node.InstanceID, node.InternalIP.String(), node.Zone})
+		data = append(data, []string{node.Name, node.InstanceID, node.InternalIP.String(), node.Zone, node.InstanceType})
 	}
 	cobra.CheckErr(t.WithData(data).Render())
 
@@ -101,10 +102,28 @@ func clusterInspect(clusterID string) {
 	cobra.CheckErr(err)
 
 	for _, node := range nodes {
+		var ins *ecs.Instance
+		for _, i := range instances {
+			if i.InstanceId == node.InstanceID {
+				ins = &i
+				break
+			}
+		}
+		if ins == nil {
+			continue
+		}
+		var publicIP string
+		if len(ins.PublicIpAddress.IpAddress) > 0 {
+			publicIP = ins.PublicIpAddress.IpAddress[0]
+		}
+		if ins.EipAddress.IpAddress != "" {
+			publicIP = ins.EipAddress.IpAddress
+		}
+
 		t := pterm.DefaultTable.WithHasHeader(true)
 		var data [][]string
-		data = append(data, []string{"Name", "InstanceID", "InternalIP", "Zone"},
-			[]string{node.Name, node.InstanceID, node.InternalIP.String(), node.Zone})
+		data = append(data, []string{"Name", "InstanceID", "InternalIP", "Zone", "PublicIP"},
+			[]string{node.Name, node.InstanceID, node.InternalIP.String(), node.Zone, publicIP})
 		_ = t.WithData(data).Render()
 
 		pterm.DefaultSection.WithLevel(3).Println("ENI info")
@@ -153,11 +172,12 @@ func clusterInspect(clusterID string) {
 
 // Node is the k8s node struct
 type Node struct {
-	Name       string
-	InstanceID string
-	InternalIP net.IP
-	Region     string
-	Zone       string
+	Name         string
+	InstanceID   string
+	InternalIP   net.IP
+	Region       string
+	Zone         string
+	InstanceType string
 }
 
 func GetNodes(client kubernetes.Interface, filterName []string) ([]Node, error) {
@@ -181,11 +201,12 @@ func GetNodes(client kubernetes.Interface, filterName []string) ([]Node, error) 
 			continue
 		}
 		node := Node{
-			Name:       k8sNode.Name,
-			InstanceID: utils.ParseInstanceID(&k8sNode),
-			InternalIP: utils.ParseInternalIP(&k8sNode),
-			Region:     utils.ParseRegion(&k8sNode),
-			Zone:       utils.ParseZone(&k8sNode),
+			Name:         k8sNode.Name,
+			InstanceID:   utils.ParseInstanceID(&k8sNode),
+			InternalIP:   utils.ParseInternalIP(&k8sNode),
+			Region:       utils.ParseRegion(&k8sNode),
+			Zone:         utils.ParseZone(&k8sNode),
+			InstanceType: utils.ParseInstanceType(&k8sNode),
 		}
 		nodes = append(nodes, node)
 	}

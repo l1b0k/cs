@@ -153,3 +153,8 @@ func ParseZone(node *corev1.Node) string {
 	id, _ := node.Labels[corev1.LabelTopologyZone]
 	return id
 }
+
+func ParseInstanceType(node *corev1.Node) string {
+	id, _ := node.Labels[corev1.LabelInstanceTypeStable]
+	return id
+}
