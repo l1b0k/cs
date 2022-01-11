@@ -164,6 +164,9 @@ func clusterInspect(clusterID string) {
 						eniList = append(eniList, pterm.LeveledListItem{Level: 1, Text: fmt.Sprintf("%s %s", memberENI.NetworkInterfaceId, views.ENIColor(memberENI.Type))})
 						eniList = append(eniList, pterm.LeveledListItem{Level: 2, Text: fmt.Sprintf("%s %s", memberENI.VSwitchId, strings.Join(memberENI.SecurityGroupIds.SecurityGroupId, ","))})
 						eniList = append(eniList, pterm.LeveledListItem{Level: 2, Text: fmt.Sprintf("%s %s", memberENI.MacAddress, views.IPColor(memberENI.PrivateIpAddress))})
+						for _, addr := range memberENI.Ipv6Sets.Ipv6Set {
+							eniList = append(eniList, pterm.LeveledListItem{Level: 4, Text: views.IPColor(addr.Ipv6Address)})
+						}
 					}
 				}
 			}
