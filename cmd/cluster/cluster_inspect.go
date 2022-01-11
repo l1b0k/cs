@@ -149,6 +149,9 @@ func clusterInspect(clusterID string) {
 				for _, addr := range eni.PrivateIpSets.PrivateIpSet {
 					eniList = append(eniList, pterm.LeveledListItem{Level: 2, Text: views.IPColor(addr.PrivateIpAddress)})
 				}
+				for _, addr := range eni.Ipv6Sets.Ipv6Set {
+					eniList = append(eniList, pterm.LeveledListItem{Level: 2, Text: views.IPColor(addr.Ipv6Address)})
+				}
 				if eni.Type == "Trunk" {
 					memberENISet, err := openAPI.DescribeNetworkInterface(ctx, "", "Member")
 					if err != nil {
