@@ -33,13 +33,50 @@ var clusterSwitchCmd = &cobra.Command{
 	Use:   "switch",
 	Short: "switch kubernetes ctx to this cluster",
 	Long:  "switch kubernetes ctx to this cluster",
-	Args:  cobra.MinimumNArgs(1),
+	Args:  cobra.MaximumNArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
-		clusterSwitch(args[0])
+		clusterID := ""
+		if len(args) != 0 {
+			clusterID = args[0]
+		}
+
+		clusterSwitch(clusterID)
 	},
 }
 
 func clusterSwitch(clusterID string) {
+	if clusterID == "" {
+		// choose the latest cluster in list
+		clusters, err := openAPI.DescribeClustersV1Request(context.TODO())
+		cobra.CheckErr(err)
+
+		if len(clusters) == 0 {
+			fmt.Fprintln(os.Stderr, "can not find any clusters")
+			os.Exit(1)
+		}
+
+		clusterID = clusters[0].ClusterID
+	}
+
+	if len(clusterID) != 33 {
+		clusters, err := openAPI.DescribeClustersV1Request(context.TODO())
+		cobra.CheckErr(err)
+
+		found := false
+		for _, c := range clusters {
+			if c.Name == clusterID {
+				clusterID = c.ClusterID
+				found = true
+				break
+			}
+		}
+
+		if !found {
+			fmt.Fprintf(os.Stderr, "can not find name %s in clusters\n", clusterID)
+			os.Exit(1)
+		}
+	}
+
 	cluster, err := openAPI.DescribeClusterDetail(context.TODO(), clusterID)
 	cobra.CheckErr(err)
 
